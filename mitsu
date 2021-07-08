@@ -1,0 +1,4 @@
+#!/usr/bin/python3
+# ミツ: a basic password manager
+
+import subprocess

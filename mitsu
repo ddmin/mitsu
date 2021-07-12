@@ -4,7 +4,6 @@
 import os
 import subprocess
 import stdiomask
-import pyperclip
 
 import rich
 from rich.text import Text

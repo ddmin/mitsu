@@ -1,4 +1,252 @@
 #!/usr/bin/python3
 # ミツ: a basic password manager
 
+import os
 import subprocess
+import stdiomask
+import pyperclip
+
+import rich
+from rich.text import Text
+from rich.panel import Panel
+from rich.tree import Tree
+
+CONFIG_DIR = '/home/ddmin/.mitsu'
+PASS_DIR = os.path.join(CONFIG_DIR, 'passwords')
+RECIPIENT = 'ddmin216@outlook.com'
+TIME_LIMIT = 10000
+
+# remove file extension
+def removeExt(file):
+    file = file.split('.')[:-1]
+    return '.'.join(file)
+
+# program directories
+def configureDirectory():
+    if not os.path.isdir(CONFIG_DIR):
+        os.makedirs(CONFIG_DIR)
+
+    if not os.path.isdir(PASS_DIR):
+        os.makedirs(PASS_DIR)
+
+# delete empty directories
+def cleanEmptyDirs():
+    for directory in os.listdir(PASS_DIR):
+        FULL_PATH = os.path.join(PASS_DIR, directory)
+        d = os.listdir(FULL_PATH)
+        if not d:
+            subprocess.run(['rm', '-rf', f'{FULL_PATH}'])
+
+def help():
+    h = Text("Help", justify="center")
+    h.stylize("#77dd77")
+    h.stylize('underline')
+    rich.print(h)
+
+    m = Text("mitsu: a terminal password manager", justify="center")
+    m.stylize("#a66bd1")
+    rich.print(m)
+    print()
+
+    helpMenu = rich.table.Table.grid(expand=True)
+    helpMenu.add_column()
+    helpMenu.add_column(justify="left")
+    helpMenu.add_column(justify="right")
+    helpMenu.add_column()
+
+    SPACE = '            '
+    helpMenu.add_row(SPACE, '[#00bbff](l)ist:', '[#64e8b5]list existing passwords', SPACE)
+    helpMenu.add_row(SPACE, '[#00bbff](g)et \[name]:', '[#64e8b5]copy existing password to clipboard', SPACE)
+    helpMenu.add_row(SPACE, '[#00bbff](a)dd \[name]:', '[#64e8b5]add new password', SPACE)
+    helpMenu.add_row(SPACE, '[#00bbff](d)elete \[name]:', '[#64e8b5]delete existing password', SPACE)
+    helpMenu.add_row(SPACE, '[#00bbff](e)dit \[name]:', '[#64e8b5]edit existing password', SPACE)
+    helpMenu.add_row(SPACE, '[#00bbff](h)elp', '[#64e8b5]print help menu', SPACE)
+
+    rich.print(helpMenu)
+
+def list():
+    tree = Tree("[#a668d1]Passwords")
+    categories = os.listdir(PASS_DIR)
+    for category in categories:
+        branch = tree.add('[#00bbff]'+category)
+        names = os.listdir(os.path.join(PASS_DIR, category))
+        for name in names:
+            n = removeExt(name)
+            branch.add('[#64e8b5]'+n)
+
+    rich.print(tree)
+
+    if not categories:
+        rich.print('[#00bbff]No passwords saved.')
+
+    print()
+
+def add():
+    categories = os.listdir(PASS_DIR)
+
+    rich.print("Enter [#a668d1]password category[/#a668d1] (leave blank for [#00bbff]'General'[/#00bbff])")
+    rich.print('[#77dd77]Category: ', end='')
+    category = input()
+
+    if not category:
+        category = 'General'
+
+    print()
+
+    CATEGORY_DIR = os.path.join(PASS_DIR, category)
+    if not os.path.isdir(CATEGORY_DIR):
+        os.mkdir(CATEGORY_DIR)
+
+    name = ''
+    while not name:
+        rich.print("Enter a [#a668d1]name[/#a668d1] for the password")
+        rich.print('[#77dd77]Name: ', end='')
+        name = input()
+
+        if os.path.isfile(os.path.join(CATEGORY_DIR, f'{name}.gpg')):
+            print()
+            rich.print('That password already exists! Would you like to edit the current password? [#ff3f3a](y/n)[/#ff3f3a]: ', end='')
+            opt = input('')
+            print()
+            return
+
+        print()
+
+        pw = ''
+        while not pw:
+            rich.print(f"Enter a [#a668d1]password[/#a668d1] for [#00bbff]'{name}'[/#00bbff]:")
+            rich.print('[#77dd77]> ', end='')
+            pw = stdiomask.getpass(prompt='')
+            if not pw:
+                print("Please enter a password.")
+                print()
+
+        print()
+
+        rawFile = os.path.join(CATEGORY_DIR, f'{name}')
+        gpgFile = os.path.join(CATEGORY_DIR, f'{name}.gpg')
+
+        with open(rawFile, 'w') as f:
+            f.write(pw)
+
+        subprocess.run(['gpg', '--output', f'{gpgFile}', '--encrypt', '--recipient', f'{RECIPIENT}', f'{rawFile}'])
+        subprocess.run(['rm', f'{rawFile}'])
+
+        rich.print(f'[#a668d1]{name}[/#a668d1] has been saved.')
+        print()
+
+def get():
+    rich.print('[#77dd77]Categories[/#77dd77]')
+    categories = os.listdir(PASS_DIR)
+
+    if not categories:
+        rich.print('[#00bbff]No passwords saved.')
+        print()
+        return
+
+    elif len(categories) == 1:
+        category = categories[0]
+
+    else:
+        for i, category in enumerate(categories):
+            rich.print(f'{i+1}. [#00bbff]{category}')
+        print()
+
+        while True:
+            rich.print(f"Select a [#a668d1]category[/#a668d1] [#00bbff](1-{len(categories)})")
+            rich.print('[#77dd77]> ', end='')
+
+            try:
+                category = categories[max(int(input())-1, 0)]
+                break
+            except (EOFError, KeyboardInterrupt):
+                exit()
+            except:
+                print("Please try again.")
+                print()
+
+    print()
+
+    rich.print('[#77dd77]Passwords[/#77dd77]')
+    passwords = os.listdir(os.path.join(PASS_DIR, category))
+
+    if not passwords:
+        rich.print('[#00bbff]No passwords saved.')
+        print()
+        return
+
+    elif len(passwords) == 1:
+        pw = passwords[0]
+
+    else:
+        for i, p in enumerate(passwords):
+            rich.print(f"{i+1}. [#00bbff]{removeExt(p)}")
+        print()
+
+        while True:
+            rich.print(f"Select a [#a668d1]password[/#a668d1] [#00bbff](1-{len(passwords)})")
+            rich.print('[#77dd77]> ', end='')
+
+            try:
+                pw = passwords[max(int(input())-1, 0)]
+                break
+            except (EOFError, KeyboardInterrupt):
+                exit()
+            except:
+                print("Please try again.")
+                print()
+    print()
+
+    gpgFile = os.path.join(os.path.join(PASS_DIR, category), pw)
+
+    os.system(f'gpg --decrypt {gpgFile} 2>/dev/null | xsel -b -t {TIME_LIMIT}')
+
+    rich.print(f'[#a668d1]{removeExt(pw)}[/#a668d1] has been copied to the clipboard.')
+    print()
+
+def main():
+    title = Text(justify='center', style='#A66BD1')
+
+    title.append(r'     _ __            ' + '\n')
+    title.append(r'      ____ ___  (_) /________  __' + '\n')
+    title.append(r'     / __ `__ \/ / __/ ___/ / / /' + '\n')
+    title.append(r'   / / / / / / / /_(__  ) /_/ /' + '\n')
+    title.append(r' /_/ /_/ /_/_/\__/____/\__,_/')
+
+    rich.print(title)
+
+    # create directories
+    configureDirectory()
+
+    opt = ''
+
+    try:
+        while opt != 'exit':
+            # clean up empty directories
+            cleanEmptyDirs()
+
+            rich.print('[#77dd77]> ', end='')
+            opt = input().lower().strip()
+            print()
+
+            if opt.startswith('h') or opt.startswith('help'):
+                help()
+            elif opt.startswith('l') or opt.startswith('list'):
+                list()
+            elif opt.startswith('g') or opt.startswith('get'):
+                get()
+            elif opt.startswith('a') or opt.startswith('add'):
+                add()
+            elif opt.startswith('d') or opt.startswith('delete'):
+                pass
+            elif opt.startswith('e') or opt.startswith('edit'):
+                pass
+            elif not opt:
+                exit()
+            else:
+                help()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        exit()
+
+main()

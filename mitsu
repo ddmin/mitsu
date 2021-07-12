@@ -241,6 +241,8 @@ def main():
                 pass
             elif opt.startswith('e') or opt.startswith('edit'):
                 pass
+            elif opt.startswith('clear'):
+                os.system('clear')
             elif not opt:
                 exit()
             else:

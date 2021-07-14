@@ -93,8 +93,6 @@ def add():
         print()
         return
 
-    print()
-
     if not category:
         category = 'General'
 
@@ -192,7 +190,8 @@ def get():
                 print()
                 return
             except:
-                print("Please try again.")
+                print()
+                rich.print("[#ff3f3a]Please try again.")
                 print()
 
     print()
@@ -225,6 +224,7 @@ def get():
                 print()
                 return
             except:
+                print()
                 rich.print('[#ff3f3a]Please try again.')
                 print()
     print()
@@ -265,7 +265,8 @@ def delete():
                 print()
                 return
             except:
-                print("Please try again.")
+                print()
+                rich.print("[#ff3f3a]Please try again.")
                 print()
 
     print()
@@ -298,6 +299,7 @@ def delete():
                 print()
                 return
             except:
+                print()
                 rich.print('[#ff3f3a]Please try again.')
                 print()
     print()
@@ -307,7 +309,6 @@ def delete():
     remove = False
     rich.print(f"[#ff3f3a]Are you sure you want to delete '[#a668d1]{removeExt(pw)}[/#a668d1]'? [#77dd77](y/n): [/#77dd77]", end='')
     opt = input('')
-    print()
 
     if opt.lower()[0] == 'y':
         rich.print(f"[#a668d1]{removeExt(pw)}[/#a668d1] [#00bbff]has been deleted.")
@@ -346,7 +347,8 @@ def edit():
                 print()
                 return
             except:
-                print("Please try again.")
+                print()
+                rich.print('[#ff3f3a]Please try again.')
                 print()
 
     print()
@@ -379,6 +381,7 @@ def edit():
                 print()
                 return
             except:
+                print()
                 rich.print('[#ff3f3a]Please try again.')
                 print()
     print()

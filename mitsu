@@ -37,16 +37,6 @@ def cleanEmptyDirs():
             subprocess.run(['rm', '-rf', f'{FULL_PATH}'])
 
 def help():
-    h = Text("Help", justify="center")
-    h.stylize("#77dd77")
-    h.stylize('underline')
-    rich.print(h)
-
-    m = Text("mitsu: a terminal password manager", justify="center")
-    m.stylize("#a66bd1")
-    rich.print(m)
-    print()
-
     helpMenu = rich.table.Table.grid(expand=True)
     helpMenu.add_column()
     helpMenu.add_column(justify="left")
@@ -66,12 +56,12 @@ def help():
 def list():
     tree = Tree("[#a668d1]Passwords")
     categories = os.listdir(PASS_DIR)
-    for category in categories:
-        branch = tree.add('[#00bbff]'+category)
+    for i, category in enumerate(categories):
+        branch = tree.add(f'[#00bbff]{i+1}. '+category)
         names = os.listdir(os.path.join(PASS_DIR, category))
-        for name in names:
+        for ii, name in enumerate(names):
             n = removeExt(name)
-            branch.add('[#64e8b5]'+n)
+            branch.add(f'[#64e8b5]{ii+1}. '+n)
 
     rich.print(tree)
 
@@ -123,7 +113,6 @@ def add():
         if opt.lower()[0] == 'y':
             update = True
         else:
-            print()
             return
 
     print()
@@ -162,7 +151,6 @@ def add():
     print()
 
 def get():
-    rich.print('[#77dd77]Categories[/#77dd77]')
     categories = os.listdir(PASS_DIR)
 
     if not categories:
@@ -174,6 +162,7 @@ def get():
         category = categories[0]
 
     else:
+        rich.print('[#77dd77]Categories[/#77dd77]')
         for i, category in enumerate(categories):
             rich.print(f'{i+1}. [#00bbff]{category}')
         print()
@@ -194,9 +183,8 @@ def get():
                 rich.print("[#ff3f3a]Please try again.")
                 print()
 
-    print()
+        print()
 
-    rich.print('[#77dd77]Passwords[/#77dd77]')
     passwords = os.listdir(os.path.join(PASS_DIR, category))
 
     if not passwords:
@@ -208,6 +196,7 @@ def get():
         pw = passwords[0]
 
     else:
+        rich.print('[#77dd77]Passwords[/#77dd77]')
         for i, p in enumerate(passwords):
             rich.print(f"{i+1}. [#00bbff]{removeExt(p)}")
         print()
@@ -227,7 +216,8 @@ def get():
                 print()
                 rich.print('[#ff3f3a]Please try again.')
                 print()
-    print()
+
+        print()
 
     gpgFile = os.path.join(os.path.join(PASS_DIR, category), pw)
 
@@ -237,7 +227,6 @@ def get():
     print()
 
 def delete():
-    rich.print('[#77dd77]Categories[/#77dd77]')
     categories = os.listdir(PASS_DIR)
 
     if not categories:
@@ -249,6 +238,7 @@ def delete():
         category = categories[0]
 
     else:
+        rich.print('[#77dd77]Categories[/#77dd77]')
         for i, category in enumerate(categories):
             rich.print(f'{i+1}. [#00bbff]{category}')
         print()
@@ -269,9 +259,8 @@ def delete():
                 rich.print("[#ff3f3a]Please try again.")
                 print()
 
-    print()
+        print()
 
-    rich.print('[#77dd77]Passwords[/#77dd77]')
     passwords = os.listdir(os.path.join(PASS_DIR, category))
 
     if not passwords:
@@ -283,6 +272,7 @@ def delete():
         pw = passwords[0]
 
     else:
+        rich.print('[#77dd77]Passwords[/#77dd77]')
         for i, p in enumerate(passwords):
             rich.print(f"{i+1}. [#00bbff]{removeExt(p)}")
         print()
@@ -302,24 +292,23 @@ def delete():
                 print()
                 rich.print('[#ff3f3a]Please try again.')
                 print()
-    print()
+        print()
 
     gpgFile = os.path.join(os.path.join(PASS_DIR, category), pw)
 
     remove = False
     rich.print(f"[#ff3f3a]Are you sure you want to delete '[#a668d1]{removeExt(pw)}[/#a668d1]'? [#77dd77](y/n): [/#77dd77]", end='')
     opt = input('')
+    print()
 
     if opt.lower()[0] == 'y':
         rich.print(f"[#a668d1]{removeExt(pw)}[/#a668d1] [#00bbff]has been deleted.")
         subprocess.run(['rm', '-rf', f'{gpgFile}'])
         print()
     else:
-        print()
         return
 
 def edit():
-    rich.print('[#77dd77]Categories[/#77dd77]')
     categories = os.listdir(PASS_DIR)
 
     if not categories:
@@ -331,6 +320,7 @@ def edit():
         category = categories[0]
 
     else:
+        rich.print('[#77dd77]Categories[/#77dd77]')
         for i, category in enumerate(categories):
             rich.print(f'{i+1}. [#00bbff]{category}')
         print()
@@ -351,9 +341,8 @@ def edit():
                 rich.print('[#ff3f3a]Please try again.')
                 print()
 
-    print()
+        print()
 
-    rich.print('[#77dd77]Passwords[/#77dd77]')
     passwords = os.listdir(os.path.join(PASS_DIR, category))
 
     if not passwords:
@@ -365,6 +354,7 @@ def edit():
         pw = passwords[0]
 
     else:
+        rich.print('[#77dd77]Passwords[/#77dd77]')
         for i, p in enumerate(passwords):
             rich.print(f"{i+1}. [#00bbff]{removeExt(p)}")
         print()
@@ -384,7 +374,7 @@ def edit():
                 print()
                 rich.print('[#ff3f3a]Please try again.')
                 print()
-    print()
+        print()
 
     newPass = ''
     try:
@@ -423,7 +413,6 @@ def edit():
         rich.print(f"[#a668d1]{removeExt(pw)}[/#a668d1] [#00bbff]has been changed.")
         print()
     else:
-        print()
         return
 
 
@@ -437,6 +426,13 @@ def main():
     title.append(r' /_/ /_/ /_/_/\__/____/\__,_/')
 
     rich.print(title)
+
+    m = Text("mitsu: a terminal password manager", justify="center")
+    m.stylize("#a66bd1")
+    rich.print(m)
+    print()
+
+    help()
 
     # create directories
     configureDirectory()
@@ -453,6 +449,10 @@ def main():
             print()
 
             if opt.startswith('h') or opt.startswith('help'):
+                h = Text("Help", justify="center")
+                h.stylize("#77dd77")
+                h.stylize('underline')
+                rich.print(h)
                 help()
             elif opt.startswith('l') or opt.startswith('list'):
                 list()
@@ -469,6 +469,10 @@ def main():
             elif not opt:
                 exit()
             else:
+                h = Text("Help", justify="center")
+                h.stylize("#77dd77")
+                h.stylize('underline')
+                rich.print(h)
                 help()
 
     except (EOFError, KeyboardInterrupt):

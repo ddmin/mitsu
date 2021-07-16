@@ -6,7 +6,7 @@ Python implementation of a password manager similar to GNU pass.
 
 # Dependencies
 `
-gpg
-xsel
-requirements.txt
+- gpg
+- xsel
+- requirements.txt
 `

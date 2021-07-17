@@ -220,6 +220,7 @@ def get():
         print()
 
     gpgFile = os.path.join(os.path.join(PASS_DIR, category), pw)
+    gpgFile = gpgFile.replace(' ', '\ ')
 
     os.system(f'gpg --decrypt {gpgFile} 2>/dev/null | xsel -b -t {TIME_LIMIT}')
 

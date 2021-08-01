@@ -2,6 +2,8 @@
 # ミツ: a basic password manager
 
 import os
+import random
+import string
 import subprocess
 import stdiomask
 
@@ -13,14 +15,37 @@ from rich.tree import Tree
 CONFIG_DIR = '/home/ddmin/.mitsu'
 PASS_DIR = os.path.join(CONFIG_DIR, 'passwords')
 RECIPIENT = 'ddmin216@outlook.com'
+RANDOM_PASSWORD_LENGTH = 20
 TIME_LIMIT = 10000
 
+# generate random password
+
+
+def generatePassword(length):
+    pw = ''
+    CHARACTERS = [
+        string.ascii_lowercase,
+        string.ascii_uppercase,
+        string.digits,
+        string.punctuation + ' ',
+    ]
+
+    for i in range(length):
+        category = random.choice(CHARACTERS)
+        pw += str(random.choice(category))
+
+    return pw
+
 # remove file extension
+
+
 def removeExt(file):
     file = file.split('.')[:-1]
     return '.'.join(file)
 
 # program directories
+
+
 def configureDirectory():
     if not os.path.isdir(CONFIG_DIR):
         os.makedirs(CONFIG_DIR)
@@ -29,12 +54,15 @@ def configureDirectory():
         os.makedirs(PASS_DIR)
 
 # delete empty directories
+
+
 def cleanEmptyDirs():
     for directory in os.listdir(PASS_DIR):
         FULL_PATH = os.path.join(PASS_DIR, directory)
         d = os.listdir(FULL_PATH)
         if not d:
             subprocess.run(['rm', '-rf', f'{FULL_PATH}'])
+
 
 def help():
     helpMenu = rich.table.Table.grid(expand=True)
@@ -44,14 +72,21 @@ def help():
     helpMenu.add_column()
 
     SPACE = '            '
-    helpMenu.add_row(SPACE, '[#00bbff](l)ist:', '[#64e8b5]list existing passwords', SPACE)
-    helpMenu.add_row(SPACE, '[#00bbff](g)et \[name]:', '[#64e8b5]copy existing password to clipboard', SPACE)
-    helpMenu.add_row(SPACE, '[#00bbff](a)dd \[name]:', '[#64e8b5]add new password', SPACE)
-    helpMenu.add_row(SPACE, '[#00bbff](d)elete \[name]:', '[#64e8b5]delete existing password', SPACE)
-    helpMenu.add_row(SPACE, '[#00bbff](e)dit \[name]:', '[#64e8b5]edit existing password', SPACE)
-    helpMenu.add_row(SPACE, '[#00bbff](h)elp', '[#64e8b5]print help menu', SPACE)
+    helpMenu.add_row(SPACE, '[#00bbff](l)ist:',
+                     '[#64e8b5]list existing passwords', SPACE)
+    helpMenu.add_row(SPACE, '[#00bbff](g)et \[name]:',
+                     '[#64e8b5]copy existing password to clipboard', SPACE)
+    helpMenu.add_row(SPACE, '[#00bbff](a)dd \[name]:',
+                     '[#64e8b5]add new password', SPACE)
+    helpMenu.add_row(SPACE, '[#00bbff](d)elete \[name]:',
+                     '[#64e8b5]delete existing password', SPACE)
+    helpMenu.add_row(SPACE, '[#00bbff](e)dit \[name]:',
+                     '[#64e8b5]edit existing password', SPACE)
+    helpMenu.add_row(SPACE, '[#00bbff](h)elp',
+                     '[#64e8b5]print help menu', SPACE)
 
     rich.print(helpMenu)
+
 
 def list():
     tree = Tree("[#a668d1]Passwords")
@@ -70,10 +105,12 @@ def list():
 
     print()
 
+
 def add():
     categories = os.listdir(PASS_DIR)
 
-    rich.print("Enter [#a668d1]password category[/#a668d1] (leave blank for [#00bbff]'General'[/#00bbff])")
+    rich.print(
+        "Enter [#a668d1]password category[/#a668d1] (leave blank for [#00bbff]'General'[/#00bbff])")
     rich.print('[#77dd77]Category: ', end='')
 
     try:
@@ -107,7 +144,8 @@ def add():
     update = False
     if os.path.isfile(os.path.join(CATEGORY_DIR, f'{name}.gpg')):
         print()
-        rich.print(f"[#a668d1]'{name}'[/#a668d1] [#ff3f3a]already exists![/#ff3f3a]\n[#00bbff]Would you like to edit the current password?[/#00bbff] [#77dd77](y/n)[/#77dd77]: ", end='')
+        rich.print(
+            f"[#a668d1]'{name}'[/#a668d1] [#ff3f3a]already exists![/#ff3f3a]\n[#00bbff]Would you like to edit the current password?[/#00bbff] [#77dd77](y/n)[/#77dd77]: ", end='')
         opt = input('')
 
         if opt.lower()[0] == 'y':
@@ -120,12 +158,22 @@ def add():
     pw = ''
     try:
         while not pw:
-            rich.print(f"Enter a [#a668d1]password[/#a668d1] for [#00bbff]'{name}'[/#00bbff]:")
+            rich.print(
+                "[#ff77a0]Would you like to generate a random password?[/#ff77a0] [#77dd77](y/n)[#77dd77]: ", end='')
+            opt = input('')
+
+            if opt.lower()[0] == 'y':
+                pw = generatePassword(RANDOM_PASSWORD_LENGTH)
+                continue
+
+            print()
+            rich.print(
+                f"Enter a [#a668d1]password[/#a668d1] for [#00bbff]'{name}'[/#00bbff]:")
             rich.print('[#77dd77]> ', end='')
             pw = stdiomask.getpass(prompt='')
             if not pw:
                 print()
-                print("[#ff3f3a]Please enter a password.")
+                rich.print("[#ff3f3a]Please enter a password.")
                 print()
     except (EOFError, KeyboardInterrupt):
         rich.print('[#ff3f3a]Canceled.')
@@ -140,7 +188,8 @@ def add():
     with open(rawFile, 'w') as f:
         f.write(pw)
 
-    subprocess.run(['gpg', '--yes', '--output', f'{gpgFile}', '--encrypt', '--recipient', f'{RECIPIENT}', f'{rawFile}'])
+    subprocess.run(['gpg', '--yes', '--output',
+                   f'{gpgFile}', '--encrypt', '--recipient', f'{RECIPIENT}', f'{rawFile}'])
     subprocess.run(['rm', f'{rawFile}'])
 
     if update:
@@ -149,6 +198,7 @@ def add():
         rich.print(f'[#a668d1]{name}[/#a668d1] [#00bbff]has been saved.')
 
     print()
+
 
 def get():
     categories = os.listdir(PASS_DIR)
@@ -168,7 +218,8 @@ def get():
         print()
 
         while True:
-            rich.print(f"Select a [#a668d1]category[/#a668d1] [#00bbff](1-{len(categories)})")
+            rich.print(
+                f"Select a [#a668d1]category[/#a668d1] [#00bbff](1-{len(categories)})")
             rich.print('[#77dd77]> ', end='')
 
             try:
@@ -202,7 +253,8 @@ def get():
         print()
 
         while True:
-            rich.print(f"Select a [#a668d1]password[/#a668d1] [#00bbff](1-{len(passwords)})")
+            rich.print(
+                f"Select a [#a668d1]password[/#a668d1] [#00bbff](1-{len(passwords)})")
             rich.print('[#77dd77]> ', end='')
 
             try:
@@ -224,8 +276,10 @@ def get():
 
     os.system(f'gpg --decrypt {gpgFile} 2>/dev/null | xsel -b -t {TIME_LIMIT}')
 
-    rich.print(f'[#a668d1]{removeExt(pw)}[/#a668d1] has been copied to the clipboard.')
+    rich.print(
+        f'[#a668d1]{removeExt(pw)}[/#a668d1] has been copied to the clipboard.')
     print()
+
 
 def delete():
     categories = os.listdir(PASS_DIR)
@@ -245,7 +299,8 @@ def delete():
         print()
 
         while True:
-            rich.print(f"Select a [#a668d1]category[/#a668d1] [#00bbff](1-{len(categories)})")
+            rich.print(
+                f"Select a [#a668d1]category[/#a668d1] [#00bbff](1-{len(categories)})")
             rich.print('[#77dd77]> ', end='')
 
             try:
@@ -279,7 +334,8 @@ def delete():
         print()
 
         while True:
-            rich.print(f"Select a [#a668d1]password[/#a668d1] [#00bbff](1-{len(passwords)})")
+            rich.print(
+                f"Select a [#a668d1]password[/#a668d1] [#00bbff](1-{len(passwords)})")
             rich.print('[#77dd77]> ', end='')
 
             try:
@@ -298,16 +354,19 @@ def delete():
     gpgFile = os.path.join(os.path.join(PASS_DIR, category), pw)
 
     remove = False
-    rich.print(f"[#ff3f3a]Are you sure you want to delete '[#a668d1]{removeExt(pw)}[/#a668d1]'? [#77dd77](y/n): [/#77dd77]", end='')
+    rich.print(
+        f"[#ff3f3a]Are you sure you want to delete '[#a668d1]{removeExt(pw)}[/#a668d1]'? [#77dd77](y/n): [/#77dd77]", end='')
     opt = input('')
     print()
 
     if opt.lower()[0] == 'y':
-        rich.print(f"[#a668d1]{removeExt(pw)}[/#a668d1] [#00bbff]has been deleted.")
+        rich.print(
+            f"[#a668d1]{removeExt(pw)}[/#a668d1] [#00bbff]has been deleted.")
         subprocess.run(['rm', '-rf', f'{gpgFile}'])
         print()
     else:
         return
+
 
 def edit():
     categories = os.listdir(PASS_DIR)
@@ -327,7 +386,8 @@ def edit():
         print()
 
         while True:
-            rich.print(f"Select a [#a668d1]category[/#a668d1] [#00bbff](1-{len(categories)})")
+            rich.print(
+                f"Select a [#a668d1]category[/#a668d1] [#00bbff](1-{len(categories)})")
             rich.print('[#77dd77]> ', end='')
 
             try:
@@ -361,7 +421,8 @@ def edit():
         print()
 
         while True:
-            rich.print(f"Select a [#a668d1]password[/#a668d1] [#00bbff](1-{len(passwords)})")
+            rich.print(
+                f"Select a [#a668d1]password[/#a668d1] [#00bbff](1-{len(passwords)})")
             rich.print('[#77dd77]> ', end='')
 
             try:
@@ -380,12 +441,23 @@ def edit():
     newPass = ''
     try:
         while not newPass:
-            rich.print(f"Enter new [#a668d1]password[/#a668d1] for [#00bbff]'{removeExt(pw)}'[/#00bbff]:")
+            rich.print(
+                "[#ff77a0]Would you like to generate a random password?[/#ff77a0] [#77dd77](y/n)[#77dd77]: ", end='')
+            opt = input('')
+
+            if opt.lower()[0] == 'y':
+                newPass = generatePassword(RANDOM_PASSWORD_LENGTH)
+                continue
+
+            print()
+
+            rich.print(
+                f"Enter new [#a668d1]password[/#a668d1] for [#00bbff]'{removeExt(pw)}'[/#00bbff]:")
             rich.print('[#77dd77]> ', end='')
             newPass = stdiomask.getpass(prompt='')
             if not newPass:
                 print()
-                print("[#ff3f3a]Please enter a password.")
+                rich.print("[#ff3f3a]Please enter a password.")
                 print()
     except (EOFError, KeyboardInterrupt):
         rich.print('[#ff3f3a]Canceled.')
@@ -394,11 +466,13 @@ def edit():
 
     print()
 
-    rawFile = os.path.join(os.path.join(PASS_DIR, category), f'{removeExt(pw)}')
+    rawFile = os.path.join(os.path.join(
+        PASS_DIR, category), f'{removeExt(pw)}')
     gpgFile = os.path.join(os.path.join(PASS_DIR, category), pw)
 
     remove = False
-    rich.print(f"[#ff3f3a]Are you sure you want to change '[#a668d1]{removeExt(pw)}[/#a668d1]'? [#77dd77](y/n): [/#77dd77]", end='')
+    rich.print(
+        f"[#ff3f3a]Are you sure you want to change '[#a668d1]{removeExt(pw)}[/#a668d1]'? [#77dd77](y/n): [/#77dd77]", end='')
     opt = input('')
     print()
 
@@ -407,11 +481,13 @@ def edit():
         with open(rawFile, 'w') as f:
             f.write(newPass)
 
-        subprocess.run(['gpg', '--yes', '--output', f'{gpgFile}', '--encrypt', '--recipient', f'{RECIPIENT}', f'{rawFile}'])
+        subprocess.run(['gpg', '--yes', '--output',
+                       f'{gpgFile}', '--encrypt', '--recipient', f'{RECIPIENT}', f'{rawFile}'])
         subprocess.run(['rm', f'{rawFile}'])
         subprocess.run(['rm', '-rf', f'{rawFile}'])
 
-        rich.print(f"[#a668d1]{removeExt(pw)}[/#a668d1] [#00bbff]has been changed.")
+        rich.print(
+            f"[#a668d1]{removeExt(pw)}[/#a668d1] [#00bbff]has been changed.")
         print()
     else:
         return
@@ -479,5 +555,6 @@ def main():
     except (EOFError, KeyboardInterrupt):
         print()
         exit()
+
 
 main()
